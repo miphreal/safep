@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __author__ = 'Miphreal Adler'
 __email__ = 'miphreal@gmail.com'
@@ -5,33 +6,22 @@ __version__ = '0.1'
 
 
 '''
-Предназначена для работы с базой паролей.
+Designed to work with a passwords through cli.
 '''
-
-
-#TODO.  1. запуск вида safep /path/to/db.passwords
-#TODO.  2. после запуска программа требует пароль
-#TODO.  3. консольный интерфейс
-#TODO.      команды:
-#TODO.          ls
-#TODO.          mk
-#TODO.          rm
-#TODO.          chpass
-#TODO.  4. поддрежка тегов для записи
-#TODO.  5. поля записи: name; login; pass; tags
 
 
 import cmd
 
 
 
-class SafepCMD(cmd.Cmd):
+class SafepCLI(cmd.Cmd):
     prompt = 'safep> '
     intro = 'safep %s'%__version__
 
     def do_exit(self, line):
         """
         Exit from safep.
+        
         """
         return True
 

@@ -13,6 +13,10 @@ Designed to work with a passwords through cli.
 import cmd
 
 
+class SafeStorage:
+    def close(self):
+        pass
+
 
 class SafepCLI(cmd.Cmd):
     prompt = 'safep> '
@@ -26,12 +30,10 @@ class SafepCLI(cmd.Cmd):
         return True
 
     def preloop(self):
-        # TODO. open passwords db
-        pass
+        self.db = SafeStorage()
 
     def postloop(self):
-        # TODO. close passwords db
-        pass
+        self.db.close()
 
     def do_ls(self, line):
         pass
@@ -42,25 +44,32 @@ class SafepCLI(cmd.Cmd):
     def do_rm(self, line):
         pass
 
+    def do_ed(self, line):
+        pass
+
     def do_chpass(self, line):
         pass
 
 
 
-if __name__ == '__main__':
+def parse_args():
     import optparse
-
-    parser = optparse.OptionParser()
-    parser.add_option('-f', '--file',
-                      default='~/.safep',
-                      dest='file',
+    usage = '%prog [-f /path/to/pass] [-p password]'
+    parser = optparse.OptionParser(usage=usage)
+    parser.add_option('-f', '--file', default='~/.safep', dest='file',
                       help='path to passwords db [default: %default]')
-    parser.add_option('-p', '--pass',
-                      dest='pass',
-                      help='password for db')
-    parser.parse_args()
+    parser.add_option('-p', '--pass', dest='passwd', help='password for db')
+    (options, args) = parser.parse_args()
+    if not options.passwd:
+        print 'password>',
+        options.passwd = raw_input()
+    return (options.file, options.passwd)
 
-    SafepCMD().cmdloop()
+
+if __name__ == '__main__':
+
+    print parse_args()
+    SafepCLI().cmdloop()
 
 
 

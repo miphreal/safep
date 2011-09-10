@@ -11,13 +11,9 @@ Designed to work with a passwords through cli.
 
 
 import cmd
+from storage import SafeStorage
 
 
-class SafeStorage:
-    def __init__(self, db, passwd):
-        pass
-    def close(self):
-        pass
 
 
 class SafepCLI(cmd.Cmd):

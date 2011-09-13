@@ -21,7 +21,7 @@ from storage import SafeStorage
 
 class SafepCLI(cmd.Cmd):
     prompt = '\nsafep> '
-    intro = 'safep %s'%__version__
+    intro = 'safep {}\n{} <{}>'.format(__version__, __author__, __email__)
 
     def __init__(self, db, passwd):
         cmd.Cmd.__init__(self)
@@ -111,10 +111,11 @@ def parse_args():
     import optparse
 
     usage = '%prog [-f /path/to/pass] [-p password]'
-    parser = optparse.OptionParser(usage=usage)
+    parser = optparse.OptionParser(usage=usage, version='safep %s'%__version__)
     parser.add_option('-f', '--file', default='~/.safep', dest='file',
                       help='path to passwords db [default: %default]')
     parser.add_option('-p', '--pass', dest='passwd', help='password for db')
+
     (options, args) = parser.parse_args()
 
     if not options.passwd:

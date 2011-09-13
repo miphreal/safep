@@ -54,7 +54,7 @@ def build_record(name, user, password, keywords):
     return b64e(name),b64e(user),b64e(password),b64e(keywords)
 
 # cipher order:
-# save: text -> b64e -> +~~~ -> encrypt -> b64e
+# save: text -> b64e -> append ~~~ -> encrypt -> b64e
 # load: b64d -> decrypt -> rstrip ~~~ -> b64d -> text
 
 class PasswordError(Exception):
@@ -82,9 +82,24 @@ class SafeStorage:
     def close(self):
         pass
 
-    def search(self, word):
+    def get_records(self, indx_list, with_passwords=False):
+        result = [self._map[i] for i in indx_list]
+        if with_passwords:
+            return [(i[0],i[1],decode(self._blowfish,i[2]),i[3]) for i in result]
+        return [(i[0],i[1],'******',i[3]) for i in result]
 
-        return self._map
+    def get_record(self, indx, with_passwords=False):
+        i = self._map[indx]
+        if with_passwords:
+            return i[0], i[1], decode(self._blowfish, i[2]), i[3]
+        return i[0], i[1], '******', i[3]
+
+    def search(self, word):
+        result = []
+        for i,record in enumerate(self._map):
+            if any(word in item for item in record):
+                result.append(i)
+        return result
 
     def add(self, name, user, password, keywords):
         password = encode(self._blowfish, password)
@@ -96,17 +111,33 @@ class SafeStorage:
             f.write(encoded)
             f.write('\n')
 
+    def edit(self, indx, record):
+        self._map[indx] = (record[0],record[1],encode(self._blowfish,record[2]),record[3])
+        self._resave()
 
-    def edit(self):
-        pass
-
-    def delete(self):
-        pass
+    def delete(self, indx):
+        self._map.pop(indx)
+        self._resave()
     
-    def change_password(self):
-        pass
+    def change_password(self, password):
+        new_records = []
+        new_aes = aes(password)
+        new_blowfish = blowfish(password)
 
-    def _resave(self, password=None):
+        for (name,user,passwd,kw) in self._map:
+            p = decode(self._blowfish, passwd)
+            passwd = encode(new_blowfish, p)
+            new_records.append((name, user, passwd, kw))
+
+        #atomic{
+        self._aes = new_aes
+        self._blowfish = new_blowfish
+        self._map = new_records
+        self._resave()
+        #}
+
+
+    def _resave(self):
         with open(self._file_db,'w') as f:
             f.truncate()
             for record in self._map:

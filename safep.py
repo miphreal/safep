@@ -11,41 +11,99 @@ Designed to work with a passwords through cli.
 
 
 import cmd
+import getpass
+
 from storage import SafeStorage
 
 
 
 
+
 class SafepCLI(cmd.Cmd):
-    prompt = 'safep> '
+    prompt = '\nsafep> '
     intro = 'safep %s'%__version__
 
     def __init__(self, db, passwd):
         cmd.Cmd.__init__(self)
         self.db = SafeStorage(db, passwd)
+        self.user = getpass.getuser()
 
     def do_exit(self, line):
         """
         Exit from safep.
-        
         """
         self.db.close()
         return True
 
-    def do_ls(self, line):
-        pass
+    def _print_record(self, i, r):
+        print '{:>4} {:<15}{:<15}{:<15}{}'.format(i, *r)
+
+    def do_ls(self, word, with_passwords=False):
+        """
+        Print records without passwords (******)
+        > ls word_for_search
+        """
+        indxs = self.db.search(word)
+        records = self.db.get_records(indxs, with_passwords)
+        print '  id {:<15}{:<15}{:<15}{}'.format('name','user','password','key words')
+        for i,r in zip(indxs, records):
+            self._print_record(i, r)
+
+    def do_lsp(self, word):
+        """
+        Print records with passwords.
+        """
+        self.do_ls(word, with_passwords=True)
 
     def do_mk(self, line):
-        pass
+        """
+        Create record.
+        """
+        name = raw_input('name: ')
+        user = raw_input('user [%s]: '%self.user) or self.user
+        password = getpass.getpass('password:')
+        kw = raw_input('key words: ')
 
-    def do_rm(self, line):
-        pass
+        self._print_record('*',(name,user,'******',kw))
+        choice = raw_input('Create this record? [y]/n: ') or 'y'
+        if choice in ('y','Y'):
+            self.db.add(name,user,password,kw)
 
-    def do_ed(self, line):
-        pass
+
+    def do_rm(self, indx):
+        """
+        Delete record.
+        > rm id
+        """
+        indx = int(indx)
+        self._print_record(indx, self.db.get_record(indx))
+        inp = raw_input('Delete this record? [y]/n: ') or 'y'
+        if inp in ('y','Y'):
+            self.db.delete(indx)
+
+    def do_ed(self, indx):
+        """
+        Edit record.
+        > ed id
+        """
+        indx = int(indx)
+        (name, user, passwd, kw) = self.db.get_record(indx, True)
+
+        name = raw_input('name [%s]: '%name) or name
+        user = raw_input('user [%s]: '%user) or user
+        password = getpass.getpass('password[***]:') or passwd
+        kw = raw_input('key words [%s]: '%kw) or kw
+
+        self.db.edit(indx, (name,user,passwd,kw))
+        
 
     def do_chpass(self, line):
-        pass
+        """
+        Replace password for db.
+        > chpass new_password
+        """
+        password = getpass.getpass('password: ')
+        self.db.change_password(password)
 
 
 
@@ -60,8 +118,10 @@ def parse_args():
     (options, args) = parser.parse_args()
 
     if not options.passwd:
-        print 'password>',
-        options.passwd = raw_input()
+        import getpass
+        #print 'password>',
+        #options.passwd = raw_input()
+        options.passwd = getpass.getpass('password> ')
         
     return options.file, options.passwd
 

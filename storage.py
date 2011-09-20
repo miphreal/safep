@@ -1,6 +1,7 @@
 __author__ = 'miph'
 
 
+import os
 import base64
 b64e = lambda s: base64.encodestring(s).rstrip()
 b64d = base64.decodestring
@@ -68,8 +69,10 @@ class SafeStorage:
         self._aes = aes(passwd)
         self._blowfish = blowfish(passwd)
 
+        mode = 'r' if os.path.exists(db) else 'w+'
+
         self._map = []
-        with open(self._file_db,'r') as f:
+        with open(self._file_db, mode) as f:
             for line in f.readlines():
                 if line:
                     try:

@@ -15,7 +15,7 @@ import getpass
 
 from storage import SafeStorage
 
-
+DEFAULT_DB = '/home/{user}/.safep'.format(user=getpass.getuser())
 
 
 
@@ -36,7 +36,7 @@ class SafepCLI(cmd.Cmd):
         return True
 
     def _print_record(self, i, r):
-        print '{:>4} {:<15}{:<15}{:<15}{}'.format(i, *r)
+        print '{:>4} {:<20} {:<20} {:<25} {}'.format(i, *r)
 
     def do_ls(self, word, with_passwords=False):
         """
@@ -45,7 +45,7 @@ class SafepCLI(cmd.Cmd):
         """
         indxs = self.db.search(word)
         records = self.db.get_records(indxs, with_passwords)
-        print '  id {:<15}{:<15}{:<15}{}'.format('name','user','password','key words')
+        print '  id {:<20} {:<20} {:<25} {}'.format('name','user','password','key words')
         for i,r in zip(indxs, records):
             self._print_record(i, r)
 
@@ -94,7 +94,7 @@ class SafepCLI(cmd.Cmd):
         password = getpass.getpass('password[***]:') or passwd
         kw = raw_input('key words [%s]: '%kw) or kw
 
-        self.db.edit(indx, (name,user,passwd,kw))
+        self.db.edit(indx, (name,user,password,kw))
         
 
     def do_chpass(self, line):
@@ -112,7 +112,7 @@ def parse_args():
 
     usage = '%prog [-f /path/to/pass] [-p password]'
     parser = optparse.OptionParser(usage=usage, version='safep %s'%__version__)
-    parser.add_option('-f', '--file', default='~/.safep', dest='file',
+    parser.add_option('-f', '--file', default=DEFAULT_DB, dest='file',
                       help='path to passwords db [default: %default]')
     parser.add_option('-p', '--pass', dest='passwd', help='password for db')
 

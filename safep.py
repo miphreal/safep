@@ -4,7 +4,7 @@ __author__ = 'Miphreal Adler'
 __email__ = 'miphreal@gmail.com'
 __version__ = '0.1'
 
-
+import mechanize
 '''
 Designed to work with a passwords through cli.
 '''
@@ -27,6 +27,15 @@ class SafepCLI(cmd.Cmd):
         cmd.Cmd.__init__(self)
         self.db = SafeStorage(db, passwd)
         self.user = getpass.getuser()
+
+    def cmdloop(self, intro=None):
+        while True:
+            try:
+                cmd.Cmd.cmdloop(self, intro)
+            except KeyboardInterrupt:
+                intro = ''
+                continue
+            return
 
     def do_exit(self, line):
         """
@@ -120,8 +129,6 @@ def parse_args():
 
     if not options.passwd:
         import getpass
-        #print 'password>',
-        #options.passwd = raw_input()
         options.passwd = getpass.getpass('password> ')
         
     return options.file, options.passwd

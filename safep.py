@@ -12,6 +12,8 @@ Designed to work with a passwords through cli.
 
 import cmd
 import getpass
+import random
+import string
 
 from storage import SafeStorage
 
@@ -114,6 +116,33 @@ class SafepCLI(cmd.Cmd):
         password = getpass.getpass('password: ')
         self.db.change_password(password)
 
+    def do_pg(self, line):
+        """
+        Generate random password.
+        pg [length] [charset]
+        > pg 5
+        > pg 5 a-zA-Z0-9$%_
+        """
+        default_charset = charset = string.letters + string.digits
+        default_length = length = 8
+        range_dict = {
+            'a-z': string.lowercase,
+            'A-Z': string.uppercase,
+            '0-9': string.digits,
+            '$$': string.punctuation,
+            '++': default_charset,
+        }
+
+        if line.strip():
+            length, charset = line.split(' ', 1) if ' ' in line else (line, default_charset)
+        for k, v in range_dict.items():
+            charset = charset.replace(k, v)
+        length = int(length)
+
+        rand_char = lambda: charset[random.randrange(0, len(charset))]
+        passwd = ''.join(rand_char() for i in xrange(length))
+
+        print 'passwd>', passwd,
 
 
 def parse_args():

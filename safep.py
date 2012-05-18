@@ -2,9 +2,8 @@
 # -*- coding: utf-8 -*-
 __author__ = 'Miphreal Adler'
 __email__ = 'miphreal@gmail.com'
-__version__ = '0.1'
+__version__ = '0.2'
 
-import mechanize
 '''
 Designed to work with a passwords through cli.
 '''
@@ -16,9 +15,9 @@ import random
 import string
 
 from storage import SafeStorage
+from staff import generate_password
 
 DEFAULT_DB = '/home/{user}/.safep'.format(user=getpass.getuser())
-
 
 
 class SafepCLI(cmd.Cmd):
@@ -57,7 +56,7 @@ class SafepCLI(cmd.Cmd):
         indxs = self.db.search(word)
         records = self.db.get_records(indxs, with_passwords)
         print '  id {:<20} {:<20} {:<25} {}'.format('name','user','password','key words')
-        for i,r in zip(indxs, records):
+        for i, r in zip(indxs, records):
             self._print_record(i, r)
 
     def do_lsp(self, word):
@@ -72,14 +71,13 @@ class SafepCLI(cmd.Cmd):
         """
         name = raw_input('name: ')
         user = raw_input('user [%s]: '%self.user) or self.user
-        password = getpass.getpass('password:')
+        password = getpass.getpass('password:') or generate_password()
         kw = raw_input('key words: ')
 
         self._print_record('*',(name,user,'******',kw))
         choice = raw_input('Create this record? [y]/n: ') or 'y'
         if choice in ('y','Y'):
             self.db.add(name,user,password,kw)
-
 
     def do_rm(self, indx):
         """
@@ -92,21 +90,33 @@ class SafepCLI(cmd.Cmd):
         if inp in ('y','Y'):
             self.db.delete(indx)
 
-    def do_ed(self, indx):
+    def do_ed(self, line):
         """
         Edit record.
-        > ed id
+        > ed id --new-password --no-backup
         """
-        indx = int(indx)
-        (name, user, passwd, kw) = self.db.get_record(indx, True)
+        indx, opts = line.split(' ', 1) if ' ' in line.strip() else (line, '')
+        if indx.isdigit():
+            indx = int(indx)
+            new_password = '--new-password' in opts
+            backup = '--no-backup' not in opts
+        else:
+            print('Incorrect id')
+            return
+
+        name, user, passwd, kw = self.db.get_record(indx, True)
 
         name = raw_input('name [%s]: '%name) or name
         user = raw_input('user [%s]: '%user) or user
         password = getpass.getpass('password[***]:') or passwd
         kw = raw_input('key words [%s]: '%kw) or kw
 
-        self.db.edit(indx, (name,user,password,kw))
-        
+        if new_password:
+            password = generate_password()
+            if backup:
+                kw = '{kw}, last({name}|{user}:{passwd})'.format(**locals())
+
+        self.db.edit(indx, (name, user, password, kw))
 
     def do_chpass(self, line):
         """
@@ -116,33 +126,25 @@ class SafepCLI(cmd.Cmd):
         password = getpass.getpass('password: ')
         self.db.change_password(password)
 
-    def do_pg(self, line):
+    def do_pg(self, line=''):
         """
         Generate random password.
         pg [length] [charset]
         > pg 5
         > pg 5 a-zA-Z0-9$%_
         """
-        default_charset = charset = string.letters + string.digits
-        default_length = length = 8
-        range_dict = {
-            'a-z': string.lowercase,
-            'A-Z': string.uppercase,
-            '0-9': string.digits,
-            '$$': string.punctuation,
-            '++': default_charset,
-        }
 
-        if line.strip():
-            length, charset = line.split(' ', 1) if ' ' in line else (line, default_charset)
-        for k, v in range_dict.items():
-            charset = charset.replace(k, v)
-        length = int(length)
-
-        rand_char = lambda: charset[random.randrange(0, len(charset))]
-        passwd = ''.join(rand_char() for i in xrange(length))
-
-        print 'passwd>', passwd,
+        length = '10'
+        charset = None
+        line = line.strip()
+        if line:
+            length, charset = line.split(' ', 1) if ' ' in line else (line, None)
+        length = int(length) if length.isdigit() else None
+        
+        if length is not None:
+            print 'passwd>', generate_password(length, charset),
+        else:
+            print('Incorrect length')
 
 
 def parse_args():

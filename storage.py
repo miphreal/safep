@@ -99,8 +99,8 @@ class SafeStorage:
 
     def search(self, word):
         result = []
-        for i,record in enumerate(self._map):
-            if any(word in item for item in record):
+        for i, record in enumerate(self._map):
+            if any(word in item for item in record) or word == str(i):
                 result.append(i)
         return result
 

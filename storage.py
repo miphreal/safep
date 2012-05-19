@@ -82,6 +82,10 @@ class SafeStorage:
                     except Exception:
                         raise PasswordError
 
+    @property
+    def file_path(self):
+        return self._file_db
+
     def close(self):
         pass
 
@@ -139,7 +143,6 @@ class SafeStorage:
         self._resave()
         #}
 
-
     def _resave(self):
         with open(self._file_db,'w') as f:
             f.truncate()
@@ -148,3 +151,4 @@ class SafeStorage:
                 encoded = encode(self._aes, builded)
                 f.write(encoded)
                 f.write('\n')
+

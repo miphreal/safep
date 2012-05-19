@@ -15,7 +15,7 @@ import random
 import string
 
 from storage import SafeStorage
-from staff import generate_password
+from staff import generate_password, backup_file, backups_list, get_real_path, get_real_path
 
 DEFAULT_DB = '/home/{user}/.safep'.format(user=getpass.getuser())
 
@@ -145,6 +145,56 @@ class SafepCLI(cmd.Cmd):
             print 'passwd>', generate_password(length, charset),
         else:
             print('Incorrect length')
+
+    def do_backup(self, new_place):
+        """
+        Backup current password db.
+        > backup
+        > backup /new/path/
+        > backup /new/file
+        """
+        if backup_file(self.db.file_path, new_place):
+            print('done.')
+        else:
+            print('fail.')
+
+    def do_backups(self, line):
+        """
+        List of backups.
+        > backups
+        """
+        current = get_real_path(self.db.file_path)
+        print('current: {}'.format(current))
+        print('{:>4} {:<30} {}'.format('#', 'file', 'path'))
+        for i, backup in enumerate(backups_list(current)):
+            print('{:>4} {:<30} {}'.format('-> %s'%i if backup[1] == current else i, backup[0], backup[1]))
+
+    def do_restore(self, indx):
+        """
+        Restore default password db from backup
+        > backups
+        > restore indx
+        """
+
+        indx = int(indx) if indx.isdigit() else None
+        backups = list(backups_list(DEFAULT_DB))
+
+        if indx and len(backups) > indx and backup_file(backups[indx][1], DEFAULT_DB):
+            print('replacing... done.')
+            self.do_use('')
+        else:
+            print('fail.')
+
+    def do_use(self, path):
+        """
+        Change current password db
+        > use
+        > use /path/to/db
+        """
+        path = path or DEFAULT_DB
+        passwd = getpass.getpass('password> ')
+        self.db = SafeStorage(path, passwd)
+        print('switched to {}'.format(path))
 
 
 def parse_args():

@@ -1,6 +1,6 @@
 # Welcome
 
-safep is the console program that allows to manage passwords via CLI.
+safep is a console program that allows to manage passwords via CLI.
 
 Crypto-part: *AES, Blowfish*
 

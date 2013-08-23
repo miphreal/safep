@@ -1,13 +1,13 @@
 # Welcome
 
-safep - it's console program to manage passwords. Program has command line interface (CLI).
+safep is the console program that allows to manage passwords via CLI.
 
-*Using: AES, Blowfish*
+Crypto-part: *AES, Blowfish*
 
 
 # Use-case
 
-Before using you may create some script for running safep.py.
+Before using you may create an sh script to run safep.py.
 
 File: **safep**:
 ```bash
@@ -23,8 +23,8 @@ python /code/safep/code/safep.py $@
 * **ls** - search and display items. 
 * **lsp** - search and display items with passwords.
 * **mk** - add item.
-* **rm** - delete items. 
-* **ed** - edit item(s). 
+* **rm** - delete item. 
+* **ed** - edit item. 
 * **chpass** - change password for db. 
 * **pg** - generate random sequence
 * **use** - change file password db

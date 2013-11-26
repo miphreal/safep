@@ -31,3 +31,7 @@ python /code/safep/code/safep.py $@
 * **backup** - create backup of current db
 * **backups** - display list of backups
 * **restore** - restore default db from backup
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/miphreal/safep/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+

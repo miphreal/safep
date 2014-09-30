@@ -1,7 +1,7 @@
-__author__ = 'miph'
-
 import unittest
-import storage
+
+from safep import storage
+
 
 class MyTestCase(unittest.TestCase):
     def test_pack_unpack(self):

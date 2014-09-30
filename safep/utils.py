@@ -45,9 +45,9 @@ def backup_file(path, dst=''):
     return os.path.exists(dst)
 
 def backups_list(path):
-    dir = get_dir(path)
-    full_dir = lambda f: os.path.join(dir, f)
-    return reversed(sorted((f,full_dir(f)) for f in os.listdir(dir) if f.startswith('.safep.') and os.path.isfile(full_dir(f))))
+    path_folder = get_dir(path)
+    full_dir = lambda f: os.path.join(path_folder, f)
+    return reversed(sorted((f,full_dir(f)) for f in os.listdir(path_folder) if f.startswith('.safep.') and os.path.isfile(full_dir(f))))
 
 
 

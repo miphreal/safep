@@ -1,6 +1,3 @@
-__author__ = 'miph'
-
-
 import os
 import base64
 b64e = lambda s: base64.encodestring(s).rstrip()
@@ -15,15 +12,14 @@ except ImportError:
     from hashlib import md5 as hash_func
 
 
-
 def _cipher(algo, secret):
     h = hash_func()
     h.update(secret)
-    hash = h.hexdigest()
+    hash_line = h.hexdigest()
 
     l = len(secret)
-    if l<32:
-        secret = secret+hash[l:]
+    if l < 32:
+        secret = secret + hash_line[l:]
     else:
         secret = secret[:32]
     return algo.new(secret)
@@ -35,7 +31,8 @@ blowfish = partial(_cipher, Blowfish)
 def pack(data):
     data = b64e(data)
     m = len(data) % 16
-    return data + (16-m)*'~'
+    return data + (16 - m) * '~'
+
 
 def unpack(data):
     return b64d(data.rstrip('~'))
@@ -44,6 +41,7 @@ def unpack(data):
 def encode(cipher, data):
     return b64e(cipher.encrypt(pack(data))).replace('\n','')
 
+
 def decode(cipher, data):
     return unpack(cipher.decrypt(b64d(data)))
 
@@ -51,8 +49,9 @@ def decode(cipher, data):
 def parse_record(data):
     return tuple([b64d(r) for r in data.split(',')])
 
+
 def build_record(name, user, password, keywords):
-    return b64e(name),b64e(user),b64e(password),b64e(keywords)
+    return b64e(name), b64e(user), b64e(password), b64e(keywords)
 
 # cipher order:
 # save: text -> b64e -> append ~~~ -> encrypt -> b64e

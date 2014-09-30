@@ -1,32 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-__author__ = 'Miphreal Adler'
-__email__ = 'miphreal@gmail.com'
-__version__ = '0.2'
-
-'''
-Designed to work with a passwords through cli.
-'''
-
-
 import cmd
 import getpass
-import random
-import string
+from os.path import expanduser
 
-from storage import SafeStorage
-from staff import generate_password, backup_file, backups_list, get_real_path, get_real_path
+from safep import __version__, __email__, __author__
+from safep.storage import SafeStorage
+from safep.utils import generate_password, backup_file, backups_list, get_real_path
 
-DEFAULT_DB = '/home/{user}/.safep'.format(user=getpass.getuser())
+
+DEFAULT_DB = u'{home}/.safep'.format(home=expanduser('~'))
 
 
 class SafepCLI(cmd.Cmd):
     prompt = '\nsafep> '
     intro = 'safep {}\n{} <{}>'.format(__version__, __author__, __email__)
 
-    def __init__(self, db, passwd):
+    def __init__(self, db, passwd, storage_class=SafeStorage):
         cmd.Cmd.__init__(self)
-        self.db = SafeStorage(db, passwd)
+        self.db = storage_class(db, passwd)
         self.user = getpass.getuser()
 
     def cmdloop(self, intro=None):
@@ -46,7 +38,7 @@ class SafepCLI(cmd.Cmd):
         return True
 
     def _print_record(self, i, r):
-        print '{:>4} {:<20} {:<20} {:<25} {}'.format(i, *r)
+        print('{:>4} {:<20} {:<20} {:<25} {}'.format(i, *r))
 
     def do_ls(self, word, with_passwords=False):
         """
@@ -55,7 +47,7 @@ class SafepCLI(cmd.Cmd):
         """
         indxs = self.db.search(word)
         records = self.db.get_records(indxs, with_passwords)
-        print '  id {:<20} {:<20} {:<25} {}'.format('name','user','password','key words')
+        print('  id {:<20} {:<20} {:<25} {}'.format('name','user','password','key words'))
         for i, r in zip(indxs, records):
             self._print_record(i, r)
 
@@ -142,7 +134,7 @@ class SafepCLI(cmd.Cmd):
         length = int(length) if length.isdigit() else None
         
         if length is not None:
-            print 'passwd>', generate_password(length, charset),
+            print('passwd> {}'.format(generate_password(length, charset)))
         else:
             print('Incorrect length')
 
@@ -175,7 +167,6 @@ class SafepCLI(cmd.Cmd):
         > backups
         > restore indx
         """
-
         indx = int(indx) if indx.isdigit() else None
         backups = list(backups_list(DEFAULT_DB))
 
@@ -215,7 +206,7 @@ def parse_args():
     return options.file, options.passwd
 
 
-if __name__ == '__main__':
+def main():
     SafepCLI(*parse_args()).cmdloop()
 
 

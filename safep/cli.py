@@ -4,12 +4,12 @@ import cmd
 import getpass
 from os.path import expanduser
 
-from safep import __version__, __email__, __author__
-from safep.storage import SafeStorage
-from safep.utils import generate_password, backup_file, backups_list, get_real_path
+from . import __version__, __email__, __author__
+from .storage import SafeStorage
+from .utils import generate_password, backup_file, backups_list, get_real_path
 
 
-DEFAULT_DB = u'{home}/.safep'.format(home=expanduser('~'))
+DEFAULT_DB = u'{home}/.safep2'.format(home=expanduser('~'))
 
 
 class SafepCLI(cmd.Cmd):
@@ -61,13 +61,13 @@ class SafepCLI(cmd.Cmd):
         """
         Create record.
         """
-        name = raw_input('name: ')
-        user = raw_input('user [%s]: '%self.user) or self.user
+        name = input('name: ')
+        user = input('user [%s]: '%self.user) or self.user
         password = getpass.getpass('password:') or generate_password()
-        kw = raw_input('key words: ')
+        kw = input('key words: ')
 
         self._print_record('*',(name,user,'******',kw))
-        choice = raw_input('Create this record? [y]/n: ') or 'y'
+        choice = input('Create this record? [y]/n: ') or 'y'
         if choice in ('y','Y'):
             self.db.add(name,user,password,kw)
 
@@ -78,7 +78,7 @@ class SafepCLI(cmd.Cmd):
         """
         indx = int(indx)
         self._print_record(indx, self.db.get_record(indx))
-        inp = raw_input('Delete this record? [y]/n: ') or 'y'
+        inp = input('Delete this record? [y]/n: ') or 'y'
         if inp in ('y','Y'):
             self.db.delete(indx)
 

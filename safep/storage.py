@@ -1,15 +1,21 @@
 import os
 import base64
-b64e = lambda s: base64.encodestring(s).rstrip()
-b64d = base64.decodestring
-
 from functools import partial
 from Crypto.Cipher import AES, Blowfish
+import uuid
 
 try:
     from md5 import md5 as hash_func
 except ImportError:
     from hashlib import md5 as hash_func
+
+import json
+from copy import deepcopy
+
+
+
+b64e = lambda s: base64.b64encode(s).rstrip()
+b64d = base64.b64decode
 
 
 def _cipher(algo, secret):
@@ -60,7 +66,7 @@ def build_record(name, user, password, keywords):
 class PasswordError(Exception):
     pass
 
-class SafeStorage:
+class SafeStorageOld:
     #NOTE. record fields: name, user, password, keywords
     def __init__(self, db, passwd):
         self._file_db = db
@@ -151,3 +157,99 @@ class SafeStorage:
                 f.write(encoded)
                 f.write('\n')
 
+
+class Record(dict):
+    version = 1
+    columns = ('id', 'title', 'user', 'secret', 'keywords')
+    editable_columns = ('title', 'user', 'secret', 'keywords')
+    secret_columns = ('user', 'secret')
+
+    @property
+    def id(self):
+        return self['id']
+
+    def copy_record(self, strip_secret=False):
+        r = deepcopy(self)
+        if strip_secret:
+            for c in self.secret_columns:
+                r[c] = '***{}***'.format(c)
+        return r
+
+
+class SafeStorage:
+    record_class = Record
+
+    def __init__(self, path, master_password):
+        self._path = path
+        self._db = self._open(path, master_password)
+
+    def _open(self, path, master_password):
+        # TODO. open with master password (so entire file is ciphered)
+        if not os.path.exists(path):
+            with open(path, 'w') as f:
+                f.write('[]')
+
+        data = []
+        with open(path) as f:
+            for entry in json.load(f):
+                data.append(self.record_class(**entry))
+
+        return list(sorted(data, key=lambda obj: obj['id']))
+
+    def _sync(self):
+        with open(self._path, 'w') as f:
+            json.dump(self._db, f)
+
+    def close(self):
+        self._sync()
+
+    @property
+    def file_path(self):
+        return self._path
+
+    def get_records(self, ids_list, strip_secret=False):
+        return [r.copy_record(strip_secret=strip_secret)
+                for r in self._db if r.id in ids_list]
+
+    def get_record(self, record_id, strip_secret=False):
+        return next(iter(self.get_records([record_id], strip_secret=strip_secret)), None)
+
+    def search(self, word):
+        result = []
+        for record in self._db:
+            if any(word in item for item in record.values()):
+                result.append(record.id)
+        return result
+
+    def add(self, **data):
+        record = self.record_class(id=uuid.uuid4().hex, **data)
+        self._db.append(record)
+        return record
+
+    def edit(self, record_id, new_record):
+        for record in self._db:
+            if record.id == record_id:
+                record.update(new_record)
+
+        self._sync()
+
+    def delete(self, record_id):
+        self._db = [r for r in self._db if r.id != record_id]
+        self._sync()
+
+    def change_password(self, password):
+        new_records = []
+        new_aes = aes(password)
+        new_blowfish = blowfish(password)
+
+        for (name,user,passwd,kw) in self._map:
+            p = decode(self._blowfish, passwd)
+            passwd = encode(new_blowfish, p)
+            new_records.append((name, user, passwd, kw))
+
+        #atomic{
+        self._aes = new_aes
+        self._blowfish = new_blowfish
+        self._map = new_records
+        self._resave()
+        #}
